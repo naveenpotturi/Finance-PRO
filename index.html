@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Finance Pro">
+    <title>Finance Pro V3</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #efefef;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --border: #e0e0e0;
+            --accent-primary: #2563eb;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --accent-light: #f0f9ff;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #242424;
+                --bg-tertiary: #2d2d2d;
+                --text-primary: #ffffff;
+                --text-secondary: #e0e0e0;
+                --text-tertiary: #999999;
+                --border: #404040;
+                --accent-primary: #60a5fa;
+                --accent-success: #34d399;
+                --accent-danger: #f87171;
+                --accent-warning: #fbbf24;
+                --accent-light: #1e3a8a;
+                --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 80px;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title h1 { font-size: 24px; font-weight: 700; margin-bottom: 0.25rem; }
+        .header-date { font-size: 13px; color: var(--text-secondary); }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .goal-card {
+            background: linear-gradient(135deg, var(--accent-light), rgba(37, 99, 235, 0.05));
+            border: 2px solid var(--accent-primary);
+        }
+
+        .goal-title { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem; }
+        .goal-amount { font-size: 36px; font-weight: 700; color: var(--accent-primary); margin-bottom: 0.5rem; }
+        .goal-progress { font-size: 14px; color: var(--text-secondary); margin-bottom: 1rem; }
+        .progress-bar { background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 1rem; }
+        .progress-fill { background: linear-gradient(90deg, var(--accent-success), var(--accent-primary)); height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+        .goal-detail { font-size: 14px; font-weight: 600; color: var(--accent-primary); }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .metric-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 0.5rem; }
+        .metric-value { font-size: 24px; font-weight: 700; }
+        .metric-value.success { color: var(--accent-success); }
+        .metric-value.danger { color: var(--accent-danger); }
+
+        .alerts-section { margin-bottom: 1.5rem; }
+        .alert-item {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-warning);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            font-size: 14px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 70px;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            color: var(--text-tertiary);
+            text-decoration: none;
+            font-size: 10px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active { color: var(--accent-primary); }
+        .nav-icon { font-size: 24px; margin-bottom: 2px; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .section-header { font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin: 1.5rem 0 1rem 0; font-weight: 600; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 12px; color: var(--text-secondary); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.3px; }
+
+        input, select {
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-primary { background: var(--accent-primary); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-success { background: var(--accent-success); color: white; }
+        .btn-danger { background: var(--accent-danger); color: white; }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); }
+
+        .list-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .list-item:hover { background: var(--bg-tertiary); }
+        .list-item-main { flex: 1; }
+        .list-item-title { font-weight: 600; font-size: 14px; margin-bottom: 0.25rem; }
+        .list-item-meta { font-size: 12px; color: var(--text-secondary); }
+        .list-item-amount { font-weight: 700; font-size: 16px; margin: 0 1rem; }
+        .list-item-amount.success { color: var(--accent-success); }
+        .list-item-amount.danger { color: var(--accent-danger); }
+
+        .empty-state { text-align: center; padding: 2rem; color: var(--text-secondary); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header { font-size: 18px; font-weight: 700; margin-bottom: 1.5rem; }
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+        }
+
+        .card-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-item.critical { border-color: var(--accent-danger); border-width: 2px; }
+        .card-name { font-weight: 600; font-size: 14px; margin-bottom: 0.5rem; }
+        .card-detail { font-size: 12px; color: var(--text-secondary); margin-bottom: 0.25rem; }
+
+        .time-period-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .time-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .time-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .chart-container { position: relative; height: 300px; margin-bottom: 2rem; }
+
+        @media (max-width: 640px) {
+            .metrics-grid { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+            .goal-amount { font-size: 28px; }
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-flex;
+            width: 50px;
+            height: 28px;
+            background: var(--bg-tertiary);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            border: none;
+            align-items: center;
+        }
+
+        .toggle-switch.active { background: var(--accent-success); }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            left: 2px;
+            transition: left 0.3s ease;
+        }
+
+        .toggle-switch.active::after { left: 24px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-title">
+                <h1>💰 Finance Pro</h1>
+                <p class="header-date" id="headerDate"></p>
+            </div>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content active">
+            <div class="card goal-card">
+                <div class="goal-title">🎯 Savings Goal</div>
+                <div class="goal-amount" id="goalAmount">$0</div>
+                <div class="goal-progress">
+                    <span id="goalPercent">0%</span> of <span id="goalTarget">$20,000</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="goalProgressBar" style="width: 0%"></div>
+                </div>
+                <div class="goal-detail" id="goalDaysText">📅 Calculating...</div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <div class="metric-label">💚 Income</div>
+                    <div class="metric-value success" id="dashIncome">$0</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">💳 Card Debt</div>
+                    <div class="metric-value danger" id="dashDebt">$0</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">📉 Expenses</div>
+                    <div class="metric-value danger" id="dashExpense">$0</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">📊 Net Saved</div>
+                    <div class="metric-value" id="dashNet">$0</div>
+                </div>
+            </div>
+
+            <div class="alerts-section" id="alertsSection"></div>
+        </div>
+
+        <!-- INCOME TAB -->
+        <div id="income" class="tab-content">
+            <div id="deliverySection">
+                <div class="section-header">🚚 Log Delivery</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Stops</label><input type="number" id="stops" placeholder="0" min="0"></div>
+                    <div class="form-group"><label>Waybills In</label><input type="number" id="waybillsIn" placeholder="0" min="0"></div>
+                    <div class="form-group"><label>Total Waybills</label><input type="number" id="totalWaybills" placeholder="0" min="0"></div>
+                    <div class="form-group"><label>Date</label><input type="date" id="deliveryDate"></div>
+                </div>
+                <button class="btn btn-success" onclick="addDelivery()">Add Delivery</button>
+                
+                <div class="section-header">Delivery History</div>
+                <div id="deliveryList"></div>
+            </div>
+
+            <div class="section-header">💵 Other Income</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Source</label><input type="text" id="otherSrc" placeholder="Freelance, tutoring..."></div>
+                <div class="form-group"><label>Amount</label><input type="number" id="otherAmt" placeholder="0.00" step="0.01" min="0"></div>
+                <div class="form-group"><label>Date</label><input type="date" id="otherDate"></div>
+            </div>
+            <button class="btn btn-success" onclick="addOtherIncome()">Add Income</button>
+            <div id="otherList" style="margin-top: 1.5rem;"></div>
+        </div>
+
+        <!-- EXPENSES TAB -->
+        <div id="expenses" class="tab-content">
+            <div class="section-header">Add Expense</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Description</label><input type="text" id="expDesc" placeholder="What did you buy?"></div>
+                <div class="form-group"><label>Amount</label><input type="number" id="expAmt" placeholder="0.00" step="0.01" min="0"></div>
+                <div class="form-group"><label>Category</label><select id="expCat"></select></div>
+                <div class="form-group"><label>Payment</label><select id="expPayMethod"><option value="cash">💵 Cash</option></select></div>
+                <div class="form-group"><label>Date</label><input type="date" id="expDate"></div>
+            </div>
+            <button class="btn btn-success" onclick="addExpense()">Add Expense</button>
+
+            <div class="section-header">Expense History</div>
+            <div id="expenseList"></div>
+        </div>
+
+        <!-- ANALYTICS TAB -->
+        <div id="analytics" class="tab-content">
+            <div class="section-header">Time Period</div>
+            <div class="time-period-selector">
+                <button class="time-btn active" onclick="setPeriod('week')">This Week</button>
+                <button class="time-btn" onclick="setPeriod('month')">This Month</button>
+                <button class="time-btn" onclick="setPeriod('month3')">3 Months</button>
+                <button class="time-btn" onclick="setPeriod('all')">All Time</button>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <div class="metric-label">Total Income</div>
+                    <div class="metric-value success" id="analyticsIncome">$0</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Total Expense</div>
+                    <div class="metric-value danger" id="analyticsExpense">$0</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Card Debt</div>
+                    <div class="metric-value danger" id="analyticsDebt">$0</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Net Savings</div>
+                    <div class="metric-value" id="analyticsSavings">$0</div>
+                </div>
+            </div>
+
+            <div class="section-header">Charts</div>
+            <div class="chart-container"><canvas id="incomeExpenseChart"></canvas></div>
+            <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+        </div>
+
+        <!-- TRANSACTIONS TAB -->
+        <div id="transactions" class="tab-content">
+            <div class="section-header">All Transactions</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Type</label><select id="filterType"><option value="">All</option><option value="income">Income</option><option value="expense">Expense</option><option value="delivery">Delivery</option><option value="payment">Payment</option></select></div>
+                <div class="form-group"><label>Category</label><select id="filterCat"><option value="">All</option></select></div>
+                <div class="form-group"><label>Search</label><input type="text" id="filterSearch" placeholder="Description..."></div>
+            </div>
+            <button class="btn btn-primary" onclick="applyFilters()">Filter</button>
+            <button class="btn btn-secondary" onclick="clearFilters()">Reset</button>
+
+            <div id="transactionsList" style="margin-top: 1.5rem;"></div>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div id="settings" class="tab-content">
+            <div class="section-header">Savings Goal</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Goal Amount</label><input type="number" id="goalInput" placeholder="20000" min="0" step="0.01"></div>
+            </div>
+            <button class="btn btn-primary" onclick="updateGoal()">Update Goal</button>
+
+            <div class="section-header">Currency</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Select Currency</label><select id="currencySelect"><option value="USD">USD ($)</option><option value="INR">INR (₹)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option></select></div>
+            </div>
+            <button class="btn btn-primary" onclick="updateCurrency()">Update Currency</button>
+
+            <div class="section-header">Delivery Rates</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Rate 1</label><input type="number" id="rate1" placeholder="1.80" step="0.01" min="0"></div>
+                <div class="form-group"><label>Rate 2</label><input type="number" id="rate2" placeholder="0.50" step="0.01" min="0"></div>
+            </div>
+            <button class="btn btn-primary" onclick="updateRates()">Update Rates</button>
+
+            <div class="section-header">Categories</div>
+            <div class="form-grid">
+                <div class="form-group"><label>New Category</label><input type="text" id="newCat" placeholder="Travel, etc..."></div>
+            </div>
+            <button class="btn btn-success" onclick="addCategory()">Add</button>
+            <div id="categoriesList" style="margin-top: 1rem;"></div>
+
+            <div class="section-header">Credit Cards</div>
+            <button class="btn btn-primary" onclick="openCardModal()">Register Card</button>
+            <div id="cardsList" style="margin-top: 1rem;"></div>
+
+            <div class="section-header">Recurring Payments</div>
+            <button class="btn btn-primary" onclick="openRecurringModal()">Add Recurring</button>
+            <div id="recurringList" style="margin-top: 1rem;"></div>
+
+            <div class="section-header">Delivery Income</div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span id="deliveryToggleText">Enabled</span>
+                <button class="toggle-switch active" id="deliveryToggle" onclick="toggleDelivery()"></button>
+            </div>
+        </div>
+
+        <!-- BACKUP TAB -->
+        <div id="backup" class="tab-content">
+            <div class="card">
+                <h2 style="font-size: 16px; margin-bottom: 1rem;">☁️ Cloud Backup</h2>
+                <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 1.5rem;">Export to Google Drive, iCloud, or Dropbox. Import anytime.</p>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="exportData()">📥 Export</button>
+                    <button class="btn btn-primary" onclick="importData()">📤 Import</button>
+                    <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All</button>
+                </div>
+                <div id="backupStatus" style="margin-top: 1rem; font-size: 13px; color: var(--text-secondary);"></div>
+                <input type="file" id="fileInput" accept=".json" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="cardModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeCardModal()">✕</button>
+            <div class="modal-header">Register Card</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Card Name</label><input type="text" id="cardName" placeholder="Visa, Amex..."></div>
+                <div class="form-group"><label>Credit Limit</label><input type="number" id="cardLimit" placeholder="5000" min="0" step="0.01"></div>
+                <div class="form-group"><label>Current Balance</label><input type="number" id="cardBalance" placeholder="0" min="0" step="0.01"></div>
+                <div class="form-group"><label>Due Date</label><input type="date" id="cardDue"></div>
+                <div class="form-group"><label>Interest Rate %</label><input type="number" id="cardRate" placeholder="18" min="0" max="100" step="0.01"></div>
+            </div>
+            <button class="btn btn-success" onclick="saveCard()">Save Card</button>
+        </div>
+    </div>
+
+    <div id="recurringModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeRecurringModal()">✕</button>
+            <div class="modal-header">Recurring Payment</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Name</label><input type="text" id="recurName" placeholder="Netflix..."></div>
+                <div class="form-group"><label>Amount</label><input type="number" id="recurAmt" placeholder="9.99" min="0" step="0.01"></div>
+                <div class="form-group"><label>Category</label><select id="recurCat"></select></div>
+                <div class="form-group"><label>Frequency</label><select id="recurFreq"><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+                <div class="form-group"><label>Due Day</label><input type="number" id="recurDay" placeholder="15" min="1" max="31"></div>
+                <div class="form-group"><label>Payment Method</label><select id="recurPayment"></select></div>
+            </div>
+            <button class="btn btn-success" onclick="saveRecurring()">Save</button>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeEditModal()">✕</button>
+            <div class="modal-header">Edit Transaction</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Description</label><input type="text" id="editDesc" placeholder="What did you buy?"></div>
+                <div class="form-group"><label>Amount</label><input type="number" id="editAmt" placeholder="0.00" step="0.01" min="0"></div>
+                <div class="form-group"><label>Category</label><select id="editCat"></select></div>
+                <div class="form-group"><label>Payment Method</label><select id="editPayment"></select></div>
+                <div class="form-group"><label>Date</label><input type="date" id="editDate"></div>
+            </div>
+            <button class="btn btn-primary" onclick="saveEditedTransaction()">Save Changes</button>
+        </div>
+    </div>
+
+    <script>
+        const STATE = {
+            settings: {
+                savingsGoal: 20000,
+                currency: 'USD',
+                currencySymbol: '$',
+                deliveryEnabled: true,
+                deliveryRate1: 1.80,
+                deliveryRate2: 0.50,
+                categories: ['Dining Out', 'Entertainment', 'Groceries', 'Shopping', 'Transport', 'Utilities', 'Other']
+            },
+            expenses: JSON.parse(localStorage.getItem('expenses')) || [],
+            deliveries: JSON.parse(localStorage.getItem('deliveries')) || [],
+            otherIncome: JSON.parse(localStorage.getItem('otherIncome')) || [],
+            cards: JSON.parse(localStorage.getItem('cards')) || [],
+            recurringPayments: JSON.parse(localStorage.getItem('recurringPayments')) || [],
+            timePeriod: 'month',
+            editingId: null,
+            editingType: null
+        };
+
+        const savedSettings = JSON.parse(localStorage.getItem('settings'));
+        if (savedSettings) Object.assign(STATE.settings, savedSettings);
+
+        window.addEventListener('load', () => {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            setDate();
+            processRecurringPayments();
+            populateCategorySelects();
+            populatePaymentMethods();
+            updateAllUI();
+            setupCategoryList();
+            setupCardsList();
+            setupRecurringList();
+        }
+
+        function save() {
+            localStorage.setItem('expenses', JSON.stringify(STATE.expenses));
+            localStorage.setItem('deliveries', JSON.stringify(STATE.deliveries));
+            localStorage.setItem('otherIncome', JSON.stringify(STATE.otherIncome));
+            localStorage.setItem('cards', JSON.stringify(STATE.cards));
+            localStorage.setItem('recurringPayments', JSON.stringify(STATE.recurringPayments));
+            localStorage.setItem('settings', JSON.stringify(STATE.settings));
+        }
+
+        function setDate() {
+            const now = new Date();
+            document.getElementById('headerDate').textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('deliveryDate').valueAsDate = now;
+            document.getElementById('expDate').valueAsDate = now;
+            document.getElementById('otherDate').valueAsDate = now;
+            document.getElementById('cardDue').valueAsDate = now;
+        }
+
+        function fmt(n) { return (Math.round(n * 100) / 100).toFixed(2); }
+        function cur(n) { return STATE.settings.currencySymbol + Math.round(n); }
+
+        function addDelivery() {
+            const s = parseInt(document.getElementById('stops').value) || 0;
+            const w = parseInt(document.getElementById('waybillsIn').value) || 0;
+            const t = parseInt(document.getElementById('totalWaybills').value) || 0;
+            const d = document.getElementById('deliveryDate').value;
+            if (!s || !w || !t || !d) return alert('Fill all fields');
+            const additional = Math.max(0, w - s);
+            const pay = (t - additional) * STATE.settings.deliveryRate1 + additional * STATE.settings.deliveryRate2;
+            STATE.deliveries.push({id: Date.now(), stops: s, waybillsIn: w, totalWaybills: t, pay, date: d});
+            save();
+            document.getElementById('stops').value = document.getElementById('waybillsIn').value = document.getElementById('totalWaybills').value = '';
+            updateAllUI();
+        }
+
+        function deleteDelivery(id) {
+            STATE.deliveries = STATE.deliveries.filter(d => d.id !== id);
+            save();
+            updateAllUI();
+        }
+
+        function addOtherIncome() {
+            const a = parseFloat(document.getElementById('otherAmt').value);
+            const s = document.getElementById('otherSrc').value.trim();
+            const d = document.getElementById('otherDate').value;
+            if (!a || !s || !d) return alert('Fill all fields');
+            STATE.otherIncome.push({id: Date.now(), amount: a, source: s, date: d});
+            save();
+            document.getElementById('otherAmt').value = document.getElementById('otherSrc').value = '';
+            updateAllUI();
+        }
+
+        function deleteOtherIncome(id) {
+            STATE.otherIncome = STATE.otherIncome.filter(i => i.id !== id);
+            save();
+            updateAllUI();
+        }
+
+        function addExpense() {
+            const desc = document.getElementById('expDesc').value.trim();
+            const amt = parseFloat(document.getElementById('expAmt').value);
+            const cat = document.getElementById('expCat').value;
+            const pay = document.getElementById('expPayMethod').value;
+            const date = document.getElementById('expDate').value;
+            if (!desc || !amt || !date) return alert('Fill all fields');
+            STATE.expenses.push({id: Date.now(), description: desc, amount: amt, category: cat, paymentMethod: pay, date});
+            if (pay.startsWith('credit_')) updateCardBalance(pay, amt);
+            save();
+            document.getElementById('expDesc').value = document.getElementById('expAmt').value = '';
+            updateAllUI();
+        }
+
+        function deleteExpense(id) {
+            const exp = STATE.expenses.find(e => e.id === id);
+            if (exp && exp.paymentMethod.startsWith('credit_')) updateCardBalance(exp.paymentMethod, -exp.amount);
+            STATE.expenses = STATE.expenses.filter(e => e.id !== id);
+            save();
+            updateAllUI();
+        }
+
+        function updateCardBalance(cardId, amount) {
+            if (cardId.startsWith('credit_')) {
+                const id = parseInt(cardId.split('_')[1]);
+                const card = STATE.cards.find(c => c.id === id);
+                if (card) card.currentBalance = Math.max(0, Math.min(card.currentBalance + amount, card.creditLimit));
+            }
+        }
+
+        function addCard() {
+            const name = document.getElementById('cardName').value.trim();
+            const limit = parseFloat(document.getElementById('cardLimit').value);
+            const balance = parseFloat(document.getElementById('cardBalance').value) || 0;
+            const due = document.getElementById('cardDue').value;
+            const rate = parseFloat(document.getElementById('cardRate').value) || 0;
+            if (!name || !limit || !due) return alert('Fill required fields');
+            if (balance > limit) return alert('Balance cannot exceed limit');
+            STATE.cards.push({id: Date.now(), name, type: 'credit', cardNumber: '****' + Math.floor(Math.random() * 10000), creditLimit: limit, currentBalance: balance, dueDate: due, interestRate: rate, isActive: true});
+            save();
+            closeCardModal();
+            updateAllUI();
+        }
+
+        function deleteCard(id) {
+            STATE.cards = STATE.cards.filter(c => c.id !== id);
+            save();
+            populatePaymentMethods();
+            updateAllUI();
+        }
+
+        function addRecurring() {
+            const name = document.getElementById('recurName').value.trim();
+            const amt = parseFloat(document.getElementById('recurAmt').value);
+            const cat = document.getElementById('recurCat').value;
+            const freq = document.getElementById('recurFreq').value;
+            const day = parseInt(document.getElementById('recurDay').value);
+            const pay = document.getElementById('recurPayment').value;
+            if (!name || !amt || !day || !pay) return alert('Fill all fields');
+            const nextDue = calculateNextDue(freq, day);
+            STATE.recurringPayments.push({id: Date.now(), name, amount: amt, category: cat, frequency: freq, dueDate: day, paymentMethod: pay, isActive: true, nextDueDate: nextDue});
+            save();
+            closeRecurringModal();
+            updateAllUI();
+        }
+
+        function deleteRecurring(id) {
+            STATE.recurringPayments = STATE.recurringPayments.filter(r => r.id !== id);
+            save();
+            updateAllUI();
+        }
+
+        function calculateNextDue(freq, day) {
+            const now = new Date();
+            if (freq === 'weekly') return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            if (freq === 'monthly') return new Date(now.getFullYear(), now.getMonth() + 1, day).toISOString().split('T')[0];
+            if (freq === 'yearly') return new Date(now.getFullYear() + 1, now.getMonth(), day).toISOString().split('T')[0];
+        }
+
+        function processRecurringPayments() {
+            const today = new Date().toISOString().split('T')[0];
+            STATE.recurringPayments.forEach(r => {
+                if (r.isActive && r.nextDueDate <= today) {
+                    STATE.expenses.push({id: Date.now(), description: r.name, amount: r.amount, category: r.category, paymentMethod: r.paymentMethod, date: today});
+                    if (r.paymentMethod.startsWith('credit_')) updateCardBalance(r.paymentMethod, r.amount);
+                    r.nextDueDate = calculateNextDue(r.frequency, r.dueDate);
+                }
+            });
+            save();
+        }
+
+        function updateAllUI() {
+            updateDashboard();
+            updateDeliveryList();
+            updateOtherIncomeList();
+            updateExpensesList();
+            updateTransactionsList();
+            updateAnalytics();
+        }
+
+        function updateDashboard() {
+            const now = new Date();
+            const thisMonth = STATE.expenses.filter(e => {
+                const d = new Date(e.date);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            });
+
+            const income = getIncomeForPeriod('month');
+            const expense = thisMonth.reduce((s, e) => s + e.amount, 0);
+            const totalIncome = STATE.deliveries.reduce((s, d) => s + d.pay, 0) + STATE.otherIncome.reduce((s, i) => s + i.amount, 0);
+            const totalExp = STATE.expenses.reduce((s, e) => s + e.amount, 0);
+            const totalDebt = STATE.cards.reduce((s, c) => s + c.currentBalance, 0);
+            const savings = totalIncome - totalExp - totalDebt;
+            const pct = Math.min(Math.round((savings / STATE.settings.savingsGoal) * 100), 100);
+            const dailyRate = (income - expense) / 30;
+            const daysToGoal = dailyRate > 0 ? Math.round((STATE.settings.savingsGoal - savings) / dailyRate) : 999;
+
+            document.getElementById('goalAmount').textContent = cur(savings);
+            document.getElementById('goalPercent').textContent = pct;
+            document.getElementById('goalTarget').textContent = cur(STATE.settings.savingsGoal);
+            document.getElementById('goalProgressBar').style.width = pct + '%';
+            document.getElementById('goalDaysText').textContent = daysToGoal < 999 ? `📅 ${daysToGoal} days at ${STATE.settings.currencySymbol}${dailyRate.toFixed(0)}/day` : '📅 Keep saving!';
+
+            document.getElementById('dashIncome').textContent = cur(income);
+            document.getElementById('dashExpense').textContent = cur(expense);
+            document.getElementById('dashDebt').textContent = cur(totalDebt);
+            document.getElementById('dashNet').textContent = cur(income - expense - totalDebt);
+
+            const alerts = [];
+            STATE.cards.forEach(c => {
+                const util = (c.currentBalance / c.creditLimit) * 100;
+                if (util > 80) alerts.push(`⚠️ ${c.name} ${Math.round(util)}% used - ${cur(c.currentBalance)}/${cur(c.creditLimit)}`);
+                const due = new Date(c.dueDate);
+                const today = new Date();
+                if (due <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)) alerts.push(`📅 ${c.name} due ${c.dueDate}`);
+            });
+            STATE.recurringPayments.forEach(r => {
+                const nextDue = new Date(r.nextDueDate);
+                const today = new Date();
+                if (nextDue <= new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000)) alerts.push(`🔔 ${r.name} due ${r.nextDueDate}`);
+            });
+
+            const alertsHtml = alerts.length === 0 ? '<div style="color: var(--text-secondary);">No alerts</div>' : 
+                alerts.map(a => `<div class="alert-item">${a}</div>`).join('');
+            document.getElementById('alertsSection').innerHTML = alertsHtml;
+        }
+
+        function getIncomeForPeriod(period) {
+            const now = new Date();
+            let start;
+            if (period === 'week') {
+                start = new Date(now);
+                start.setDate(now.getDate() - now.getDay());
+            } else if (period === 'month') {
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+            } else if (period === 'month3') {
+                start = new Date(now);
+                start.setMonth(now.getMonth() - 3);
+            } else {
+                start = new Date(0);
+            }
+            const del = STATE.deliveries.filter(d => new Date(d.date) >= start).reduce((s, d) => s + d.pay, 0);
+            const other = STATE.otherIncome.filter(i => new Date(i.date) >= start).reduce((s, i) => s + i.amount, 0);
+            return del + other;
+        }
+
+        function getExpenseForPeriod(period) {
+            const now = new Date();
+            let start;
+            if (period === 'week') {
+                start = new Date(now);
+                start.setDate(now.getDate() - now.getDay());
+            } else if (period === 'month') {
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+            } else if (period === 'month3') {
+                start = new Date(now);
+                start.setMonth(now.getMonth() - 3);
+            } else {
+                start = new Date(0);
+            }
+            return STATE.expenses.filter(e => new Date(e.date) >= start).reduce((s, e) => s + e.amount, 0);
+        }
+
+        function updateDeliveryList() {
+            if (!STATE.settings.deliveryEnabled) {
+                document.getElementById('deliverySection').style.display = 'none';
+                return;
+            }
+            document.getElementById('deliverySection').style.display = 'block';
+            const html = STATE.deliveries.length === 0 ? '<div class="empty-state">No deliveries</div>' :
+                STATE.deliveries.sort((a, b) => new Date(b.date) - new Date(a.date)).map(d => `
+                    <div class="list-item">
+                        <div class="list-item-main">
+                            <div class="list-item-title">${d.stops} stops • ${d.waybillsIn} in stops</div>
+                            <div class="list-item-meta">${new Date(d.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="list-item-amount success">+${fmt(d.pay)}</div>
+                        <button class="btn btn-danger" style="padding: 0.5rem; font-size: 12px;" onclick="deleteDelivery(${d.id})">✕</button>
+                    </div>
+                `).join('');
+            document.getElementById('deliveryList').innerHTML = html;
+        }
+
+        function updateOtherIncomeList() {
+            const html = STATE.otherIncome.length === 0 ? '<div class="empty-state">No other income</div>' :
+                STATE.otherIncome.sort((a, b) => new Date(b.date) - new Date(a.date)).map(i => `
+                    <div class="list-item">
+                        <div class="list-item-main">
+                            <div class="list-item-title">${i.source}</div>
+                            <div class="list-item-meta">${new Date(i.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="list-item-amount success">+${fmt(i.amount)}</div>
+                        <button class="btn btn-danger" style="padding: 0.5rem; font-size: 12px;" onclick="deleteOtherIncome(${i.id})">✕</button>
+                    </div>
+                `).join('');
+            document.getElementById('otherList').innerHTML = html;
+        }
+
+        function updateExpensesList() {
+            const html = STATE.expenses.length === 0 ? '<div class="empty-state">No expenses</div>' :
+                STATE.expenses.sort((a, b) => new Date(b.date) - new Date(a.date)).map(e => `
+                    <div class="list-item" onclick="editTransaction('${e.id}', 'expense')">
+                        <div class="list-item-main">
+                            <div class="list-item-title">${e.description}</div>
+                            <div class="list-item-meta">${e.category} • ${getPaymentMethodName(e.paymentMethod)} • ${new Date(e.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="list-item-amount danger">-${fmt(e.amount)}</div>
+                        <button class="btn btn-danger" style="padding: 0.5rem; font-size: 12px;" onclick="event.stopPropagation(); deleteExpense(${e.id})">✕</button>
+                    </div>
+                `).join('');
+            document.getElementById('expenseList').innerHTML = html;
+        }
+
+        function getPaymentMethodName(method) {
+            if (method === 'cash') return '💵 Cash';
+            if (method.startsWith('credit_')) {
+                const id = parseInt(method.split('_')[1]);
+                const card = STATE.cards.find(c => c.id === id);
+                return card ? card.name : 'Card';
+            }
+            return 'Unknown';
+        }
+
+        function updateTransactionsList() {
+            let all = [
+                ...STATE.expenses.map(e => ({type: 'expense', ...e, desc: e.description, amount: -e.amount})),
+                ...STATE.deliveries.map(d => ({type: 'delivery', id: d.id, date: d.date, amount: d.pay, desc: `${d.stops} stops`, category: 'Delivery'})),
+                ...STATE.otherIncome.map(i => ({type: 'income', id: i.id, date: i.date, amount: i.amount, desc: i.source, category: 'Other Income'}))
+            ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const typeFilter = document.getElementById('filterType')?.value || '';
+            const catFilter = document.getElementById('filterCat')?.value || '';
+            const search = document.getElementById('filterSearch')?.value?.toLowerCase() || '';
+
+            if (typeFilter) all = all.filter(a => a.type === typeFilter);
+            if (catFilter) all = all.filter(a => a.category === catFilter);
+            if (search) all = all.filter(a => a.desc.toLowerCase().includes(search));
+
+            const html = all.length === 0 ? '<div class="empty-state">No transactions</div>' :
+                all.map(t => `
+                    <div class="list-item" onclick="editTransaction(${t.id}, '${t.type}')">
+                        <div class="list-item-main">
+                            <div class="list-item-title">${t.desc}</div>
+                            <div class="list-item-meta">${t.category || 'Other'} • ${new Date(t.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="list-item-amount ${t.amount >= 0 ? 'success' : 'danger'}">${t.amount >= 0 ? '+' : ''}${fmt(Math.abs(t.amount))}</div>
+                    </div>
+                `).join('');
+            document.getElementById('transactionsList').innerHTML = html;
+        }
+
+        function updateAnalytics() {
+            const income = getIncomeForPeriod(STATE.timePeriod);
+            const expense = getExpenseForPeriod(STATE.timePeriod);
+            const totalIncome = STATE.deliveries.reduce((s, d) => s + d.pay, 0) + STATE.otherIncome.reduce((s, i) => s + i.amount, 0);
+            const totalExp = STATE.expenses.reduce((s, e) => s + e.amount, 0);
+            const totalDebt = STATE.cards.reduce((s, c) => s + c.currentBalance, 0);
+
+            document.getElementById('analyticsIncome').textContent = cur(income);
+            document.getElementById('analyticsExpense').textContent = cur(expense);
+            document.getElementById('analyticsDebt').textContent = cur(totalDebt);
+            document.getElementById('analyticsSavings').textContent = cur(income - expense - totalDebt);
+
+            drawCharts();
+        }
+
+        function drawCharts() {
+            // Simple placeholder charts
+            const ctx1 = document.getElementById('incomeExpenseChart');
+            if (ctx1?.getContext) {
+                try {
+                    if (window.incomeChart) window.incomeChart.destroy();
+                    window.incomeChart = new Chart(ctx1, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                            datasets: [{label: 'Income', data: [800, 900, 750, 1000], backgroundColor: '#10b981'}, {label: 'Expense', data: [300, 350, 400, 450], backgroundColor: '#ef4444'}]
+                        },
+                        options: {responsive: true, maintainAspectRatio: false, scales: {y: {beginAtZero: true}}}
+                    });
+                } catch (e) {}
+            }
+
+            const ctx2 = document.getElementById('categoryChart');
+            if (ctx2?.getContext) {
+                try {
+                    const cats = {};
+                    STATE.expenses.forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.amount; });
+                    if (window.catChart) window.catChart.destroy();
+                    window.catChart = new Chart(ctx2, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(cats).length > 0 ? Object.keys(cats) : ['No Data'],
+                            datasets: [{data: Object.values(cats).length > 0 ? Object.values(cats) : [1], backgroundColor: ['#2563eb', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899']}]
+                        },
+                        options: {responsive: true, maintainAspectRatio: false}
+                    });
+                } catch (e) {}
+            }
+        }
+
+        function populateCategorySelects() {
+            const html = STATE.settings.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('expCat').innerHTML = html;
+            document.getElementById('recurCat').innerHTML = html;
+            document.getElementById('editCat').innerHTML = html;
+            document.getElementById('filterCat').innerHTML = '<option value="">All</option>' + html;
+        }
+
+        function populatePaymentMethods() {
+            const cash = '<option value="cash">💵 Cash</option>';
+            const credit = STATE.cards.map(c => `<option value="credit_${c.id}">${c.name}</option>`).join('');
+            document.getElementById('expPayMethod').innerHTML = cash + credit;
+            document.getElementById('editPayment').innerHTML = cash + credit;
+            document.getElementById('recurPayment').innerHTML = cash + credit;
+        }
+
+        function setupCategoryList() {
+            const html = STATE.settings.categories.map(c => `
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 0.5rem;">
+                    <span>${c}</span>
+                    <button class="btn btn-danger" style="padding: 0.3rem 0.75rem; font-size: 11px;" onclick="removeCategory('${c}')">Remove</button>
+                </div>
+            `).join('');
+            document.getElementById('categoriesList').innerHTML = html;
+        }
+
+        function setupCardsList() {
+            const html = STATE.cards.length === 0 ? '<div style="color: var(--text-secondary);">No cards registered</div>' :
+                STATE.cards.map(c => {
+                    const util = (c.currentBalance / c.creditLimit) * 100;
+                    return `<div class="card-item ${util > 80 ? 'critical' : ''}">
+                        <div class="card-name">${c.name} ${c.cardNumber}</div>
+                        <div class="card-detail">Balance: ${fmt(c.currentBalance)} / ${fmt(c.creditLimit)}</div>
+                        <div class="card-detail">Available: ${fmt(c.creditLimit - c.currentBalance)}</div>
+                        <div class="card-detail">Due: ${c.dueDate}</div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: ${util}%; background: ${util > 80 ? 'var(--accent-danger)' : 'var(--accent-success)'}"></div></div>
+                        <button class="btn btn-danger" style="width: 100%; margin-top: 0.75rem; padding: 0.5rem;" onclick="deleteCard(${c.id})">Remove Card</button>
+                    </div>`;
+                }).join('');
+            document.getElementById('cardsList').innerHTML = html;
+        }
+
+        function setupRecurringList() {
+            const html = STATE.recurringPayments.length === 0 ? '<div style="color: var(--text-secondary);">No recurring payments</div>' :
+                STATE.recurringPayments.map(r => `
+                    <div class="list-item">
+                        <div class="list-item-main">
+                            <div class="list-item-title">${r.name}</div>
+                            <div class="list-item-meta">${r.frequency} • Due ${r.dueDate}th • Next: ${r.nextDueDate}</div>
+                        </div>
+                        <div class="list-item-amount">${fmt(r.amount)}</div>
+                        <button class="btn btn-danger" style="padding: 0.5rem; font-size: 12px;" onclick="deleteRecurring(${r.id})">✕</button>
+                    </div>
+                `).join('');
+            document.getElementById('recurringList').innerHTML = html;
+        }
+
+        function addCategory() {
+            const cat = document.getElementById('newCat').value.trim();
+            if (!cat) return alert('Enter a category name');
+            if (STATE.settings.categories.includes(cat)) return alert('Category already exists');
+            STATE.settings.categories.push(cat);
+            document.getElementById('newCat').value = '';
+            save();
+            populateCategorySelects();
+            setupCategoryList();
+        }
+
+        function removeCategory(c) {
+            STATE.settings.categories = STATE.settings.categories.filter(x => x !== c);
+            save();
+            populateCategorySelects();
+            setupCategoryList();
+        }
+
+        function updateGoal() {
+            const goal = parseFloat(document.getElementById('goalInput').value);
+            if (!goal || goal <= 0) return alert('Enter a valid goal amount');
+            STATE.settings.savingsGoal = goal;
+            document.getElementById('goalInput').value = '';
+            save();
+            updateAllUI();
+        }
+
+        function updateCurrency() {
+            const curr = document.getElementById('currencySelect').value;
+            STATE.settings.currency = curr;
+            STATE.settings.currencySymbol = curr === 'INR' ? '₹' : curr === 'EUR' ? '€' : curr === 'GBP' ? '£' : '$';
+            save();
+            updateAllUI();
+        }
+
+        function updateRates() {
+            const r1 = parseFloat(document.getElementById('rate1').value);
+            const r2 = parseFloat(document.getElementById('rate2').value);
+            if (r1 <= 0 || r2 < 0) return alert('Enter valid rates');
+            STATE.settings.deliveryRate1 = r1;
+            STATE.settings.deliveryRate2 = r2;
+            document.getElementById('rate1').value = '';
+            document.getElementById('rate2').value = '';
+            save();
+            updateAllUI();
+        }
+
+        function toggleDelivery() {
+            STATE.settings.deliveryEnabled = !STATE.settings.deliveryEnabled;
+            document.getElementById('deliveryToggle').classList.toggle('active');
+            document.getElementById('deliveryToggleText').textContent = STATE.settings.deliveryEnabled ? 'Enabled' : 'Disabled';
+            save();
+            updateAllUI();
+        }
+
+        function setPeriod(p) {
+            STATE.timePeriod = p;
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            updateAnalytics();
+        }
+
+        function openCardModal() {
+            document.getElementById('cardModal').classList.add('active');
+        }
+
+        function closeCardModal() {
+            document.getElementById('cardModal').classList.remove('active');
+            document.getElementById('cardName').value = '';
+            document.getElementById('cardLimit').value = '';
+            document.getElementById('cardBalance').value = '';
+            document.getElementById('cardRate').value = '';
+        }
+
+        function saveCard() {
+            addCard();
+        }
+
+        function openRecurringModal() {
+            document.getElementById('recurringModal').classList.add('active');
+        }
+
+        function closeRecurringModal() {
+            document.getElementById('recurringModal').classList.remove('active');
+        }
+
+        function saveRecurring() {
+            addRecurring();
+        }
+
+        function editTransaction(id, type) {
+            STATE.editingId = id;
+            STATE.editingType = type;
+            let trans;
+            if (type === 'expense') {
+                trans = STATE.expenses.find(e => e.id === id);
+                if (trans) {
+                    document.getElementById('editDesc').value = trans.description;
+                    document.getElementById('editAmt').value = trans.amount;
+                    document.getElementById('editCat').value = trans.category;
+                    document.getElementById('editPayment').value = trans.paymentMethod;
+                    document.getElementById('editDate').value = trans.date;
+                }
+            }
+            if (trans) document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            STATE.editingId = null;
+            STATE.editingType = null;
+        }
+
+        function saveEditedTransaction() {
+            if (!STATE.editingId || !STATE.editingType) return;
+            if (STATE.editingType === 'expense') {
+                const exp = STATE.expenses.find(e => e.id === STATE.editingId);
+                if (exp) {
+                    const oldPayment = exp.paymentMethod;
+                    const oldAmount = exp.amount;
+                    const newAmount = parseFloat(document.getElementById('editAmt').value);
+                    const newPayment = document.getElementById('editPayment').value;
+                    if (oldPayment.startsWith('credit_')) updateCardBalance(oldPayment, -oldAmount);
+                    exp.description = document.getElementById('editDesc').value;
+                    exp.amount = newAmount;
+                    exp.category = document.getElementById('editCat').value;
+                    exp.paymentMethod = newPayment;
+                    exp.date = document.getElementById('editDate').value;
+                    if (newPayment.startsWith('credit_')) updateCardBalance(newPayment, newAmount);
+                }
+            }
+            save();
+            closeEditModal();
+            updateAllUI();
+        }
+
+        function applyFilters() {
+            updateTransactionsList();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterCat').value = '';
+            document.getElementById('filterSearch').value = '';
+            updateTransactionsList();
+        }
+
+        function exportData() {
+            const backup = {expenses: STATE.expenses, deliveries: STATE.deliveries, otherIncome: STATE.otherIncome, cards: STATE.cards, recurringPayments: STATE.recurringPayments, settings: STATE.settings, date: new Date().toISOString()};
+            const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'finance-pro-v3-' + Date.now() + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            document.getElementById('backupStatus').textContent = '✓ Exported! Save to cloud.';
+        }
+
+        function importData() {
+            document.getElementById('fileInput').click();
+        }
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const f = e.target.files[0];
+            if (!f) return;
+            const r = new FileReader();
+            r.onload = (evt) => {
+                try {
+                    const d = JSON.parse(evt.target.result);
+                    STATE.expenses = d.expenses || [];
+                    STATE.deliveries = d.deliveries || [];
+                    STATE.otherIncome = d.otherIncome || [];
+                    STATE.cards = d.cards || [];
+                    STATE.recurringPayments = d.recurringPayments || [];
+                    if (d.settings) Object.assign(STATE.settings, d.settings);
+                    save();
+                    updateAllUI();
+                    document.getElementById('backupStatus').textContent = '✓ Imported successfully!';
+                } catch {
+                    document.getElementById('backupStatus').textContent = '✗ Invalid file format';
+                }
+            };
+            r.readAsText(f);
+            e.target.value = '';
+        });
+
+        function clearAllData() {
+            if (confirm('Delete all data? Cannot undo.')) {
+                STATE.expenses = [];
+                STATE.deliveries = [];
+                STATE.otherIncome = [];
+                STATE.cards = [];
+                STATE.recurringPayments = [];
+                save();
+                updateAllUI();
+                document.getElementById('backupStatus').textContent = '✓ All data cleared';
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+
+    <!-- NAVIGATION BAR -->
+    <div class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('dashboard')"><div class="nav-icon">🏠</div><div>Dashboard</div></button>
+        <button class="nav-item" onclick="switchTab('income')"><div class="nav-icon">💵</div><div>Income</div></button>
+        <button class="nav-item" onclick="switchTab('expenses')"><div class="nav-icon">💳</div><div>Expenses</div></button>
+        <button class="nav-item" onclick="switchTab('analytics')"><div class="nav-icon">📊</div><div>Analytics</div></button>
+        <button class="nav-item" onclick="switchTab('transactions')"><div class="nav-icon">🔍</div><div>Transactions</div></button>
+        <button class="nav-item" onclick="switchTab('settings')"><div class="nav-icon">⚙️</div><div>Settings</div></button>
+        <button class="nav-item" onclick="switchTab('backup')"><div class="nav-icon">☁️</div><div>Backup</div></button>
+    </div>
+</body>
+</html>
